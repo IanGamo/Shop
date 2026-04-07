@@ -1,5 +1,13 @@
 package main;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import model.Product;
 import model.Sale;
@@ -133,9 +141,59 @@ public class Shop {
         //addProduct(new Product("Pera", new Amount(20.00), true, 20));
         //addProduct(new Product("Hamburguesa", new Amount(30.00), true, 30));
         //addProduct(new Product("Fresa",new Amount(5.00), true, 20));
+
+        readInventory();
+
     }
 
-    private void showCash() {
+    public void readInventory() {
+        //lo que hace es que crea un archivo nuevo, hace ruta absoluta, separa las carpetas y por ultima la ruta de donde esta
+        File doc = new File(System.getProperty("user.dir") + File.separator + "files/inputInventory.txt");
+
+        // como me daba error usamos el try, para que pruebe y si falla salta al catch
+        try {
+            //hace un stream para conectar los datos
+            FileReader fr = new FileReader(doc);
+            //Buffer que almacena los datos del stream
+            BufferedReader br = new BufferedReader(fr);
+            //lee los datos del buffer
+            String linea = br.readLine();
+            //Al leer un archivo tendremos que seguir dichos pasos
+
+            //Mientras hayan lineas...
+            while (linea != null) {
+                String[] partes = linea.split(";");
+
+                // partes[0] = "Product:Manzana"
+                String partNombre = partes[0];
+                String[] splitNombre = partNombre.split(":");
+                String nombre = splitNombre[1];
+
+                // partes[1] = "Wholesaler Price:10.00"
+                String partPrecio = partes[1];
+                String[] splitPrecio = partPrecio.split(":");
+                double precio = Double.parseDouble(splitPrecio[1]);
+
+                // partes[2] = "Stock:10"
+                String partStock = partes[2];
+                String[] splitStock = partStock.split(":");
+                int stock = Integer.parseInt(splitStock[1]);
+
+                addProduct(new Product(nombre, new Amount(precio), true, stock));
+
+                linea = br.readLine();
+            }
+
+            br.close();
+
+        } catch (FileNotFoundException e) {
+            System.out.println("No se encontró el fichero: " + e.getMessage());
+        } catch (IOException e) {
+            System.out.println("Error al leer el fichero: " + e.getMessage());
+        }
+    }
+
+    public void showCash() {
         System.out.println("Dinero actual: " + cash);
     }
 
@@ -259,11 +317,47 @@ public class Shop {
     }
 
     private void showSales() {
+        Scanner sc = new Scanner(System.in);
         System.out.println("Lista de ventas:");
         if (sales != null) {
             for (Sale sale : sales) {
                 System.out.println(sale);
             }
+        }
+
+        System.out.println("Deseas exportar el archivo? (si/no)");
+        String export = sc.nextLine();
+        if (export.equals("si")) {
+            writeSales();
+        }
+
+    }
+
+    public void writeSales() {
+        LocalDate fechaActual = LocalDate.now();
+        String fecha = fechaActual.toString();
+        String nombreFichero = "sales_" + fecha + ".txt";
+        String ruta = System.getProperty("user.dir") + File.separator + "files" + File.separator + nombreFichero;
+        try {
+            FileWriter fw = new FileWriter(ruta);
+            BufferedWriter bw = new BufferedWriter(fw);
+            int numeroVenta = 1;
+            for (Sale sale : sales) {
+                bw.write(numeroVenta + ";Client=" + sale.getClient());
+                bw.newLine();
+                String productos = "";
+                for (Product p : sale.getProducts()) {
+                    productos += p.getName() + "," + p.getPublicPrice() + "?;";
+                }
+                bw.write(numeroVenta + ";Products=" + productos);
+                bw.newLine();
+                bw.write(numeroVenta + ";Amount=" + sale.getAmount());
+                bw.newLine();
+                numeroVenta++;
+            }
+            bw.close();
+        } catch (IOException e) {
+            System.out.println("Error al escribir el fichero: " + e.getMessage());
         }
     }
 

@@ -1,0 +1,6 @@
+1;Client=PERE;
+1;Products=Manzana,20.0?;Fresa,10.0?;Hamburguesa,60.0?;
+1;Amount=93.60?;
+2;Client=Juan;
+2;Products=Manzana,20.0?;Pera,40.0?;
+2;Amount=62.40?;
